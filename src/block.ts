@@ -17,6 +17,7 @@ export default class Block {
 
 
     calculateHash = (): string => {
-        return SHA256(this.index + this.previousHash + this.timestamp + JSON.stringify(this.data)).toString();
+        const message = this.index + this.previousHash + this.timestamp + JSON.stringify(this.data);
+        return SHA256(message).toString();
     }
 }
