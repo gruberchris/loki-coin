@@ -1,17 +1,16 @@
 import { SHA256 } from "crypto-js";
+import Transaction from "./transaction";
 
 export default class Block {
-    index: number;
     timestamp: string;
-    data: any;
+    transactions: Transaction[];
     previousHash: string;
     hash: string;
     nonce: number;
 
-    constructor(index: number, timestamp: string, data: any, previousHash = "") {
-        this.index = index;
+    constructor(timestamp: string, transactions: Transaction[], previousHash = "") {
         this.timestamp = timestamp;
-        this.data = data;
+        this.transactions = transactions;
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
         this.nonce = 0;
@@ -19,7 +18,7 @@ export default class Block {
 
 
     calculateHash = (): string => {
-        const message = this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce;
+        const message = this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce;
         return SHA256(message).toString();
     }
 

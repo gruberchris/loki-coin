@@ -1,27 +1,62 @@
 import Block from "./block";
+import Transaction from "./transaction";
 
 export default class Blockchain {
     chain: Block[] = [];
     difficulty: number;
+    pendingTransactions: Transaction[];
+    miningReward: number;
 
     constructor() {
         this.chain = [this.createGenesisBlock()];
         this.difficulty = 4;
+        this.pendingTransactions = [];
+        this.miningReward = 100;
     }
 
-    createGenesisBlock = (): Block => new Block(0, new Date("01/29/2022").toISOString(), "Genesis block", "0");
+    createGenesisBlock = (): Block => {
+        const transactions: Transaction[] = [new Transaction(null, "", 0)];
+
+        // Lokicoin genesis block
+        return new Block(new Date("01/29/2022").toISOString(), transactions, "0");
+    }
 
     getLatestBlock = (): Block => this.chain[this.chain.length - 1];
 
-    addBlock = (newBlock: Block): string => {
+    minePendingTransactions = (miningRewardAddresses: string): string => {
+        // in a real blockchain, it is not possible to stuff all pending transactions into a single block as it would make
+        // for some really huge sized blocks. Instead, miner's choose which pending transactions go into a block
+        let newBlock = new Block(new Date(Date.now()).toISOString(), this.pendingTransactions);
         newBlock.previousHash = this.getLatestBlock().hash;
-
         newBlock.mineBlock(this.difficulty);
 
-        // should not be this easy to add new block to the chain as there should be many checks that should succeed before this is allowed
         this.chain.push(newBlock);
 
+        this.pendingTransactions = [new Transaction(null, miningRewardAddresses, this.miningReward)]
+
         return newBlock.hash;
+    }
+
+    createTransaction = (transaction: Transaction): void => {
+        this.pendingTransactions.push(transaction);
+    }
+
+    updateAddressBalance = (address: string): number => {
+        let balance = 0;
+
+        for(const block of this.chain) {
+            for(const trans of block.transactions) {
+                if(trans.fromAddress === address) {
+                    balance -= trans.amount;
+                }
+
+                if(trans.toAddress === address) {
+                    balance += trans.amount;
+                }
+            }
+        }
+
+        return balance;
     }
 
     isChainValid = ():boolean => {
