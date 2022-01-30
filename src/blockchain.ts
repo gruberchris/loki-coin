@@ -2,23 +2,26 @@ import Block from "./block";
 
 export default class Blockchain {
     chain: Block[] = [];
+    difficulty: number;
 
     constructor() {
         this.chain = [this.createGenesisBlock()];
+        this.difficulty = 4;
     }
 
     createGenesisBlock = (): Block => new Block(0, new Date("01/29/2022").toISOString(), "Genesis block", "0");
 
     getLatestBlock = (): Block => this.chain[this.chain.length - 1];
 
-    addBlock = (newBlock: Block): void => {
+    addBlock = (newBlock: Block): string => {
         newBlock.previousHash = this.getLatestBlock().hash;
 
-        // since block properties have changed, must calculate hash
-        newBlock.hash = newBlock.calculateHash();
+        newBlock.mineBlock(this.difficulty);
 
         // should not be this easy to add new block to the chain as there should be many checks that should succeed before this is allowed
         this.chain.push(newBlock);
+
+        return newBlock.hash;
     }
 
     isChainValid = ():boolean => {
