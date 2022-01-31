@@ -24,20 +24,31 @@ export default class Blockchain {
     getLatestBlock = (): Block => this.chain[this.chain.length - 1];
 
     minePendingTransactions = (miningRewardAddresses: string): string => {
+        const rewardTx = new Transaction(null, miningRewardAddresses, this.miningReward);
+        this.pendingTransactions.push(rewardTx);
+
         // in a real blockchain, it is not possible to stuff all pending transactions into a single block as it would make
         // for some really huge sized blocks. Instead, miner's choose which pending transactions go into a block
-        let newBlock = new Block(new Date(Date.now()).toISOString(), this.pendingTransactions);
-        newBlock.previousHash = this.getLatestBlock().hash;
+        let newBlock = new Block(new Date(Date.now()).toISOString(), this.pendingTransactions, this.getLatestBlock().hash);
+
         newBlock.mineBlock(this.difficulty);
 
         this.chain.push(newBlock);
 
-        this.pendingTransactions = [new Transaction(null, miningRewardAddresses, this.miningReward)]
+        this.pendingTransactions = [];
 
         return newBlock.hash;
     }
 
-    createTransaction = (transaction: Transaction): void => {
+    addTransaction = (transaction: Transaction): void => {
+        if(!transaction.fromAddress || !transaction.toAddress) {
+            throw new Error("Transaction must include from and to addresses");
+        }
+
+        if(!transaction.isValid()) {
+            throw new Error("Cannot add invalid transaction to chain");
+        }
+
         this.pendingTransactions.push(transaction);
     }
 
@@ -63,6 +74,8 @@ export default class Blockchain {
         for(let i = 1; i < this.chain.length; i++) {
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
+
+            if(!currentBlock.hasValidTransactions()) return false;
 
             if(currentBlock.hash !== currentBlock.calculateHash()) return false;
 

@@ -29,4 +29,12 @@ export default class Block {
             this.hash = this.calculateHash();
         }
     }
+
+    hasValidTransactions = (): boolean => {
+        for(const tx of this.transactions) {
+            if(!tx.isValid()) return false;
+        }
+
+        return true;
+    }
 }
